@@ -142,7 +142,7 @@ In overall, the participant was more active in weekdays compared to weekends and
 
 
 ### Part 3: Make a single-panel plot that shows the 24-hour activity time courses for each day
-```{r}
+```{r activity_plot}
   accel_df %>% 
   ggplot(aes(x = minute, y = activity, color = day, group = day_id)) + 
   geom_point(alpha = 0.3) + 
@@ -160,10 +160,63 @@ In overall, the participant is started to get active around 5-6 am on each day, 
 
 
 # Question 3
-### Part 1: Read ny_noaa data
+### Part 1: Read and clean ny_noaa data
 ```{r read_ny_noaa}
 data("ny_noaa")
+ny_noaa = ny_noaa %>%
+  separate(date, into = c("year", "month", "day"), convert = TRUE) %>%
+  mutate(tmax = as.numeric(tmax)/10,
+         tmin = as.numeric(tmin)/10,
+         prcp = prcp/10,
+         )
+summary(pull(ny_noaa, snow))
 ```
+
+This dataset contains `r nrow(ny_noaa)` rows and `r ncol(ny_noaa)` columns. It contains records for all New York state weather stations from January 1, 1981 through December 31, 2010. NCEI provides numerous daily variables, including maximum and minimum temperature, total daily precipitation, snowfall, and snow depth. There are `r sum(is.na(pull(ny_noaa, prcp)))` missing data in precipitation (mm), `r sum(is.na(pull(ny_noaa, snow)))` missing data in snowfall(mm), `r sum(is.na(pull(ny_noaa, snwd)))` missing data in snow depth(mm), `r sum(is.na(pull(ny_noaa, tmax)))` missing data in maximum temperature (degrees C) and `r sum(is.na(pull(ny_noaa, tmin)))` missing data in minimum temperature (degrees C). Hence, there will be a great loss of data if we omit all record with missing data.
+
+For snowfall, the most commonly observed values are 0 because it only happens at low enough temperature and humidity.
+
+
+### Part 2: Two-panel plot showing the average max temperature in January and in July in each station across years
+```{r max_temp_plot}
+max_jan = ny_noaa %>% 
+  filter(month == 1) %>% 
+  group_by(id, year, month) %>% 
+  summarise(tmax_avg = mean(tmax, na.rm = TRUE)) %>% 
+  ggplot(aes(x = year, y = tmax_avg, color = id, group = id)) +
+  geom_point(alpha = 0.5) +
+  geom_path(alpha = 0.3) +
+  theme(legend.position = "none") +
+  labs(
+    title = "Average max temperature in January in each station across years",
+    x = "Year",
+    y = "Average max temperature in degree C"
+  )
+
+ max_jul = ny_noaa %>% 
+  filter(month == 7) %>% 
+  group_by(id, year, month) %>% 
+  summarise(tmax_avg = mean(tmax, na.rm = TRUE)) %>% 
+  ggplot(aes(x = year, y = tmax_avg, color = id, group = id)) +
+  geom_point(alpha = 0.5) +
+  geom_path(alpha = 0.3) +
+  theme(legend.position = "none") +
+  labs(
+    title = "Average max temperature in January in each station across years",
+    x = "Year",
+    y = "Average max temperature in degree C"
+  )
+
+ max_jan / max_jul
+```
+
+The average max temperature in January usually fluctuate between -10 and 10 degree C. Temperature in 1994 and 2004 seem to be lower than other years. 
+The average max temperature in July usually fluctuate between 20 and 30 degree C. This fluctuation of temperature is smaller than January's.
+From the two-panel plot, there are a few outliers of average max temperature in both January and July.
+
+### Part 3:
+Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
+
 
 
 
